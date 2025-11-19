@@ -4,7 +4,8 @@
  ****************************************************/
 
 // URL de Google Apps Script
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXa7vxx1AM4nm3bVP1qhO3IbDncAQPjG4XeZdQJcONQ6ljC_OeBigGH9L_i61irhIXBw/exec";
+const APPS_SCRIPT_URL = "https://jolly-dust-2d7a.santamariapablodaniel.workers.dev/";
+
 
 // Variables locales
 let ENCARGADO_NAME = localStorage.getItem("encargadoName") || null;
