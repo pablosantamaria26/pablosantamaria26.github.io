@@ -16,6 +16,7 @@
             --card: #111111;
             --yellow: #FFD60A;
             --purple: #D437FF;
+            --blue-accent: #007bff; /* Color azul para el Duo-Tono */
             --green: #00E676;
             --red: #FF5252;
             --text: #FFFFFF;
@@ -50,6 +51,21 @@
             cursor: pointer; padding: 8px; transition: 0.3s;
         }
         .controls button:hover { color: #fff; transform: scale(1.1); }
+
+        /* --- BANNER MOTIVACIONAL (NUEVO) --- */
+        .motivational-banner {
+            padding: 15px 20px; 
+            background: #003366; /* Fondo Azul Oscuro */
+            color: var(--text);
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: center;
+            border-bottom: 2px solid var(--blue-accent);
+            box-shadow: 0 0 10px rgba(0, 123, 255, 0.4); /* Destello Azul */
+            animation: subtle-pulse 5s infinite alternate;
+            display: none; /* Se mostrará con JS */
+        }
+        .motivational-banner strong { color: var(--yellow); font-weight: 800; }
 
         /* CONTENEDOR */
         .container { padding: 20px; max-width: 500px; margin: 0 auto; padding-bottom: 120px; }
@@ -149,10 +165,17 @@
         .show-modal .modal-box { transform: scale(1) !important; }
         .spin { animation: rot 1s infinite linear; }
         
+        /* ANIMACIONES */
         @keyframes rot { 100% { transform: rotate(360deg); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideIn { from { opacity: 0; transform: translateX(-15px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes pulse { 0% { box-shadow: 0 0 15px rgba(212,55,255,0.1); } 100% { box-shadow: 0 0 30px rgba(212,55,255,0.3); } }
+        /* NUEVA ANIMACIÓN DUO-TONO */
+        @keyframes subtle-pulse {
+            0% { box-shadow: 0 0 10px rgba(0, 123, 255, 0.4); }
+            50% { box-shadow: 0 0 15px rgba(0, 123, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.1); }
+            100% { box-shadow: 0 0 10px rgba(0, 123, 255, 0.4); }
+        }
     </style>
 </head>
 <body>
@@ -167,7 +190,9 @@
             <div id="user-badge" class="hidden" style="font-size:0.8rem; background:#222; padding:4px 10px; border-radius:10px; color:var(--yellow); margin-left:5px;"></div>
         </div>
     </header>
-
+    
+    <div id="motivational-message" class="motivational-banner hidden">
+        </div>
     <div class="container">
         <div id="view-login" class="login-card">
             <i class="material-icons" style="font-size:50px; color:var(--yellow); margin-bottom:15px;">fingerprint</i>
