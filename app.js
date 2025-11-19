@@ -37,7 +37,10 @@ function login() {
 async function cargarDatosCompletos() {
     const container = document.querySelector('.task-list');
     const aiSection = document.getElementById('ai-section');
-    
+    const motivationalBanner = document.getElementById('motivational-message'); // Nuevo elemento
+
+    // Limpia la consola y muestra el loader
+    console.clear(); 
     if(container) container.innerHTML = `
         <div style="text-align:center; padding:40px; opacity:0.6">
             <i class="material-icons spin" style="font-size:30px; color:var(--yellow)">donut_large</i>
@@ -62,16 +65,31 @@ async function cargarDatosCompletos() {
         }
         
         if(data.status === "success") {
+            // 1. Renderiza las tareas pendientes
             renderizarTareas(data.tasks || []);
             
+            // 2. Muestra el Reporte IA
             if (data.ia_report && data.ia_report.texto) {
                 mostrarReporteIA(data.ia_report);
             } else {
                 aiSection.style.display = "none";
             }
+            
+            // 3. MUESTRA EL MENSAJE MOTIVACIONAL (NUEVA LÓGICA)
+            if (data.motivational_msg && motivationalBanner) {
+                motivationalBanner.innerHTML = data.motivational_msg;
+                motivationalBanner.classList.remove('hidden'); 
+                motivationalBanner.style.display = 'block';
+            } else if (motivationalBanner) {
+                motivationalBanner.classList.add('hidden');
+            }
+            
         }
     } catch (e) {
         console.error(e);
+        // Asegura que el banner motivacional se oculte si hay error de conexión
+        if (motivationalBanner) motivationalBanner.classList.add('hidden');
+        
         container.innerHTML = `
             <div style="text-align:center; padding:30px; color:#ff5252">
                 <i class="material-icons" style="font-size:40px">wifi_off</i>
