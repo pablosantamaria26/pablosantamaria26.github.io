@@ -3,15 +3,14 @@
  * Versión Final 2025 — Ultra Optimizada
  ****************************************************/
 
-// URL de Google Apps Script
+// URL del Worker (anti-CORS)
 const APPS_SCRIPT_URL = "https://jolly-dust-2d7a.santamariapablodaniel.workers.dev/";
-
 
 // Variables locales
 let ENCARGADO_NAME = localStorage.getItem("encargadoName") || null;
 
 /****************************************************
- *     INICIO DE LA APP
+ * INICIO
  ****************************************************/
 window.onload = () => {
     updateUI();
@@ -21,7 +20,7 @@ window.onload = () => {
 
 
 /****************************************************
- *      ACTUALIZAR UI
+ * UI
  ****************************************************/
 function updateUI() {
     if (ENCARGADO_NAME) {
@@ -33,7 +32,6 @@ function updateUI() {
         const notif = document.getElementById("notification-status");
         notif.textContent = "Notificaciones: ACTIVAS";
         notif.classList.add("status-success");
-
     } else {
         document.getElementById("encargado-setup").classList.remove("hidden");
         document.getElementById("main-app").classList.add("hidden");
@@ -42,7 +40,7 @@ function updateUI() {
 
 
 /****************************************************
- *     GUARDAR ENCARGADO
+ * GUARDAR ENCARGADO
  ****************************************************/
 function saveEncargado() {
     const name = document.getElementById("encargado-name").value.trim();
@@ -52,20 +50,19 @@ function saveEncargado() {
     localStorage.setItem("encargadoName", ENCARGADO_NAME);
 
     navigator.vibrate?.(80);
-
     showToast("Encargado guardado 👌");
+
     updateUI();
 }
 
 
 /****************************************************
- *      MARCAR STOCK REALIZADO — VERSIÓN FINAL
+ * MARCAR STOCK — 100% FUNCIONAL
  ****************************************************/
 function markStockDone(proveedor) {
     if (!ENCARGADO_NAME) return showToast("Primero ingresá tu nombre", true);
 
-    navigator.vibrate?.([80, 40, 80]);
-
+    navigator.vibrate?.([60, 40, 60]);
     showToast(`Marcando ${proveedor}…`);
 
     fetch(APPS_SCRIPT_URL, {
@@ -78,26 +75,26 @@ function markStockDone(proveedor) {
             fechaRealizacion: new Date().toISOString()
         })
     })
-    .then(r => r.json())
-    .then(res => {
+    .then((r) => r.json())
+    .then((res) => {
         console.log("Respuesta GAS:", res);
 
         if (res.status !== "success") {
             return showToast("Error desde servidor: " + res.message, true);
         }
 
-        // ÉXITO TOTAL
+        // Animación + ocultar tarjeta
         const card = document.querySelector(`#item-${cleanId(proveedor)}`);
         if (card) {
             card.style.opacity = "0.3";
-            card.style.transform = "scale(0.97)";
+            card.style.transform = "scale(0.95)";
         }
 
         showToast(`✔ ${proveedor} realizado`);
 
         setTimeout(() => card?.classList.add("hidden"), 900);
     })
-    .catch(err => {
+    .catch((err) => {
         console.error("Error fetch:", err);
         showToast("Error enviando datos 🚨", true);
     });
@@ -105,7 +102,7 @@ function markStockDone(proveedor) {
 
 
 /****************************************************
- *      TOAST ULTRA MODERNO NEGRO/AMARILLO
+ * TOAST ESTILO NEGRO/AMARILLO
  ****************************************************/
 function showToast(text, error = false) {
     const toast = document.getElementById("toast");
@@ -115,36 +112,32 @@ function showToast(text, error = false) {
     toast.style.color = error ? "#fff" : "#000";
 
     toast.classList.add("show");
-
     setTimeout(() => toast.classList.remove("show"), 3500);
 }
 
 
 /****************************************************
- *      OneSignal — Recibir CLICK de Notificación
+ * OneSignal — Listener de notificaciones
  ****************************************************/
 function initOneSignalListener() {
-    if (!window.OneSignal) return;
+    if (!window.OneSignalDeferred) window.OneSignalDeferred = [];
 
     OneSignalDeferred.push(function (OneSignal) {
+        if (!OneSignal || !OneSignal.Notification) return;
 
-        OneSignal.Notification.on("click", function (event) {
+        OneSignal.Notification.on("click", (event) => {
             const proveedor = event?.data?.proveedor;
+            if (!proveedor) return;
 
-            if (proveedor) {
-                focusProveedor(proveedor);
-
-                setTimeout(() => {
-                    openProveedorAction(proveedor);
-                }, 700);
-            }
+            focusProveedor(proveedor);
+            setTimeout(() => openProveedorAction(proveedor), 700);
         });
     });
 }
 
 
 /****************************************************
- *      ENFOCAR TARJETA ANIMADA
+ * ANIMACIONES UI
  ****************************************************/
 function focusProveedor(proveedor) {
     const id = `item-${cleanId(proveedor)}`;
@@ -163,23 +156,15 @@ function focusProveedor(proveedor) {
     }, 3000);
 }
 
-
-/****************************************************
- *      DESTACAR BOTÓN DE ACCIÓN
- ****************************************************/
 function openProveedorAction(proveedor) {
     const id = `item-${cleanId(proveedor)}`;
-    const card = document.getElementById(id);
-    if (!card) return;
-
-    const btn = card.querySelector("button");
+    const btn = document.querySelector(`#${id} button`);
     if (!btn) return;
 
     navigator.vibrate?.(60);
 
     btn.style.boxShadow = "0 0 18px 6px #ffcc00";
     btn.style.transform = "scale(1.08)";
-
     btn.scrollIntoView({ behavior: "smooth", block: "center" });
 
     setTimeout(() => {
@@ -190,7 +175,7 @@ function openProveedorAction(proveedor) {
 
 
 /****************************************************
- *      UTILIDAD PARA ID
+ * UTILIDAD
  ****************************************************/
 function cleanId(str) {
     return str.toLowerCase().replace(/\s+/g, "-");
