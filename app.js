@@ -1,182 +1,129 @@
 /****************************************************
- * APP.JS — STOCK SUPERVISOR (PWA + OneSignal)
- * Versión Final 2025 — Ultra Optimizada
+ * APP.JS — LÓGICA FINAL (WORKER INTEGRATION)
  ****************************************************/
 
-// URL del Worker (anti-CORS)
-const APPS_SCRIPT_URL = "https://jolly-dust-2d7a.santamariapablodaniel.workers.dev/";
+// ⚠️ IMPORTANTE: Pega aquí la URL de TU CLOUDFLARE WORKER
+// NO la de Google. La que termina en .workers.dev
+const WORKER_URL = "https://jolly-dust-2d7a.santamariapablodaniel.workers.dev/"; 
 
-// Variables locales
-let ENCARGADO_NAME = localStorage.getItem("encargadoName") || null;
+let usuarioActual = localStorage.getItem("usuarioStock");
 
-/****************************************************
- * INICIO
- ****************************************************/
-window.onload = () => {
-    updateUI();
-    initOneSignalListener();
-    console.log("📦 Stock Supervisor iniciado");
-};
+// INICIO
+window.addEventListener('DOMContentLoaded', () => {
+    verificarSesion();
+    initOneSignal();
+});
 
-
-/****************************************************
- * UI
- ****************************************************/
-function updateUI() {
-    if (ENCARGADO_NAME) {
-        document.getElementById("encargado-setup").classList.add("hidden");
-        document.getElementById("main-app").classList.remove("hidden");
-
-        document.getElementById("current-encargado").textContent = ENCARGADO_NAME;
-
-        const notif = document.getElementById("notification-status");
-        notif.textContent = "Notificaciones: ACTIVAS";
-        notif.classList.add("status-success");
-    } else {
-        document.getElementById("encargado-setup").classList.remove("hidden");
-        document.getElementById("main-app").classList.add("hidden");
+// 1. GESTIÓN DE SESIÓN
+function verificarSesion() {
+    if (usuarioActual) {
+        document.getElementById("view-login").classList.add("hidden");
+        document.getElementById("view-app").classList.remove("hidden");
+        const badge = document.getElementById("user-badge");
+        badge.textContent = usuarioActual;
+        badge.classList.remove("hidden");
     }
 }
 
+function login() {
+    const input = document.getElementById("input-name");
+    const nombre = input.value.trim();
 
-/****************************************************
- * GUARDAR ENCARGADO
- ****************************************************/
-function saveEncargado() {
-    const name = document.getElementById("encargado-name").value.trim();
-    if (!name) return showToast("Ingresá tu nombre", true);
+    if (nombre.length < 2) {
+        mostrarToast("Por favor ingresa un nombre válido", "error");
+        return;
+    }
 
-    ENCARGADO_NAME = name;
-    localStorage.setItem("encargadoName", ENCARGADO_NAME);
-
-    navigator.vibrate?.(80);
-    showToast("Encargado guardado 👌");
-
-    updateUI();
+    usuarioActual = nombre;
+    localStorage.setItem("usuarioStock", nombre);
+    verificarSesion();
+    mostrarToast(`Hola, ${nombre} 👋`, "success");
 }
 
+// 2. ENVÍO DE DATOS AL WORKER
+async function enviarReporte(proveedor, btnElement) {
+    if (!usuarioActual) return location.reload();
 
-/****************************************************
- * MARCAR STOCK — 100% FUNCIONAL
- ****************************************************/
-function markStockDone(proveedor) {
-    if (!ENCARGADO_NAME) return showToast("Primero ingresá tu nombre", true);
+    // UI: Estado Cargando
+    const originalIcon = btnElement.innerHTML;
+    btnElement.innerHTML = '<i class="material-icons spin">sync</i>';
+    btnElement.disabled = true;
 
-    navigator.vibrate?.([60, 40, 60]);
-    showToast(`Marcando ${proveedor}…`);
+    const datos = {
+        action: "stockDone",
+        proveedor: proveedor,
+        encargado: usuarioActual,
+        fechaRealizacion: new Date().toLocaleString()
+    };
 
-    fetch(APPS_SCRIPT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            action: "stockDone",
-            proveedor: proveedor,
-            encargado: ENCARGADO_NAME,
-            fechaRealizacion: new Date().toISOString()
-        })
-    })
-    .then((r) => r.json())
-    .then((res) => {
-        console.log("Respuesta GAS:", res);
+    try {
+        // PETICIÓN AL WORKER (Ahora sí soporta JSON gracias a tu nuevo código de Worker)
+        const respuesta = await fetch(WORKER_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(datos)
+        });
 
-        if (res.status !== "success") {
-            return showToast("Error desde servidor: " + res.message, true);
+        const resultado = await respuesta.json();
+
+        if (resultado.status === "success") {
+            // UI: Éxito
+            btnElement.innerHTML = '<i class="material-icons">done_all</i>';
+            btnElement.classList.add("checked");
+            
+            // Efecto visual en la tarjeta
+            const cardId = `card-${cleanId(proveedor)}`;
+            document.getElementById(cardId).style.opacity = "0.5";
+            
+            mostrarToast(`${proveedor} registrado correctamente`, "success");
+        } else {
+            throw new Error(resultado.message || "Error desconocido");
         }
 
-        // Animación + ocultar tarjeta
-        const card = document.querySelector(`#item-${cleanId(proveedor)}`);
-        if (card) {
-            card.style.opacity = "0.3";
-            card.style.transform = "scale(0.95)";
-        }
-
-        showToast(`✔ ${proveedor} realizado`);
-
-        setTimeout(() => card?.classList.add("hidden"), 900);
-    })
-    .catch((err) => {
-        console.error("Error fetch:", err);
-        showToast("Error enviando datos 🚨", true);
-    });
+    } catch (error) {
+        console.error(error);
+        mostrarToast("Error de conexión con el servidor", "error");
+        // Restaurar botón
+        btnElement.innerHTML = originalIcon;
+        btnElement.disabled = false;
+    }
 }
 
+// 3. UTILIDADES
+function cleanId(str) {
+    return str.toLowerCase().replace(/\s+/g, '-');
+}
 
-/****************************************************
- * TOAST ESTILO NEGRO/AMARILLO
- ****************************************************/
-function showToast(text, error = false) {
+function mostrarToast(mensaje, tipo) {
     const toast = document.getElementById("toast");
-    toast.textContent = text;
+    const texto = document.getElementById("toast-msg");
+    const icono = toast.querySelector("i");
 
-    toast.style.background = error ? "#d32f2f" : "#ffcc00";
-    toast.style.color = error ? "#fff" : "#000";
-
+    texto.textContent = mensaje;
+    icono.textContent = tipo === "success" ? "check_circle" : "error_outline";
+    
+    toast.className = ""; // Reset
+    toast.classList.add(tipo);
     toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 3500);
+
+    // Vibración
+    if (navigator.vibrate) navigator.vibrate(tipo === "error" ? [50, 50, 50] : 50);
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 3500);
 }
 
-
-/****************************************************
- * OneSignal — Listener de notificaciones
- ****************************************************/
-function initOneSignalListener() {
-    if (!window.OneSignalDeferred) window.OneSignalDeferred = [];
-
-    OneSignalDeferred.push(function (OneSignal) {
-        if (!OneSignal || !OneSignal.Notification) return;
-
-        OneSignal.Notification.on("click", (event) => {
-            const proveedor = event?.data?.proveedor;
-            if (!proveedor) return;
-
-            focusProveedor(proveedor);
-            setTimeout(() => openProveedorAction(proveedor), 700);
+// 4. ONESIGNAL INIT
+function initOneSignal() {
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+            appId: "b89337f7-3997-43ab-be02-bdd99346fad7",
+            safari_web_id: "",
+            notifyButton: { enable: true }
         });
     });
-}
-
-
-/****************************************************
- * ANIMACIONES UI
- ****************************************************/
-function focusProveedor(proveedor) {
-    const id = `item-${cleanId(proveedor)}`;
-    const card = document.getElementById(id);
-    if (!card) return;
-
-    navigator.vibrate?.(100);
-
-    card.style.boxShadow = "0 0 22px 6px #ffcc00";
-    card.style.transform = "scale(1.03)";
-    card.scrollIntoView({ behavior: "smooth", block: "center" });
-
-    setTimeout(() => {
-        card.style.boxShadow = "";
-        card.style.transform = "";
-    }, 3000);
-}
-
-function openProveedorAction(proveedor) {
-    const id = `item-${cleanId(proveedor)}`;
-    const btn = document.querySelector(`#${id} button`);
-    if (!btn) return;
-
-    navigator.vibrate?.(60);
-
-    btn.style.boxShadow = "0 0 18px 6px #ffcc00";
-    btn.style.transform = "scale(1.08)";
-    btn.scrollIntoView({ behavior: "smooth", block: "center" });
-
-    setTimeout(() => {
-        btn.style.boxShadow = "";
-        btn.style.transform = "";
-    }, 2500);
-}
-
-
-/****************************************************
- * UTILIDAD
- ****************************************************/
-function cleanId(str) {
-    return str.toLowerCase().replace(/\s+/g, "-");
 }
