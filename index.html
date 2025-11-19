@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Stock Supervisor AI</title>
-    <meta name="theme-color" content="#050505">
+    <meta name="theme-color" content="#000000">
     <link rel="manifest" href="manifest.json">
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -12,16 +12,14 @@
 
     <style>
         :root {
-            --bg: #050505;
-            --card-bg: #121212;
-            --stock: #FFD60A; /* Amarillo Humano */
-            --ai: #D437FF;    /* Violeta IA */
-            --ai-glow: rgba(212, 55, 255, 0.25);
+            --bg: #000000;
+            --card: #111111;
+            --yellow: #FFD60A;
+            --purple: #D437FF;
+            --green: #00E676;
+            --red: #FF5252;
             --text: #FFFFFF;
-            --text-dim: #888;
-            --success: #00E676;
-            --danger: #FF5252;
-            --radius: 16px;
+            --radius: 18px;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -31,115 +29,126 @@
             color: var(--text); overflow-x: hidden;
         }
 
-        /* --- HEADER --- */
+        /* HEADER */
         header {
             padding: 15px 20px;
-            background: rgba(10, 10, 10, 0.85); backdrop-filter: blur(12px);
+            background: rgba(10, 10, 10, 0.8); backdrop-filter: blur(15px);
             position: sticky; top: 0; z-index: 100;
             display: flex; justify-content: space-between; align-items: center;
             border-bottom: 1px solid #222;
         }
 
-        .brand {
-            font-weight: 800; font-size: 1rem; letter-spacing: 0.5px;
-            display: flex; align-items: center; gap: 8px;
-            background: linear-gradient(90deg, var(--stock), #fff);
+        .logo {
+            font-weight: 800; letter-spacing: 0.5px; font-size: 1rem;
+            background: linear-gradient(90deg, var(--yellow), #fff);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            display: flex; align-items: center; gap: 8px;
         }
 
         .controls button {
-            background: transparent; border: none; color: var(--text-dim);
+            background: none; border: none; color: #888;
             cursor: pointer; padding: 8px; transition: 0.3s;
         }
         .controls button:hover { color: #fff; transform: scale(1.1); }
 
-        /* --- CONTENEDOR --- */
-        .container { padding: 20px; max-width: 500px; margin: 0 auto; padding-bottom: 100px; }
+        /* CONTENEDOR */
+        .container { padding: 20px; max-width: 500px; margin: 0 auto; padding-bottom: 120px; }
 
-        /* --- LOGIN --- */
+        /* LOGIN */
         .login-card {
-            background: var(--card-bg); border: 1px solid #222;
-            padding: 40px 25px; border-radius: var(--radius);
-            text-align: center; margin-top: 40px;
+            background: var(--card); border: 1px solid #222;
+            padding: 40px 20px; border-radius: var(--radius);
+            text-align: center; margin-top: 50px;
             animation: fadeUp 0.6s ease;
         }
         input {
-            width: 100%; padding: 15px; background: #000; border: 1px solid #333;
-            color: white; border-radius: 10px; margin: 20px 0; text-align: center;
-            font-size: 1rem; outline: none; transition: 0.3s;
+            width: 100%; padding: 15px; background: #050505; border: 1px solid #333;
+            color: white; border-radius: 12px; margin: 20px 0; text-align: center;
+            font-size: 1.1rem; outline: none; transition: 0.3s;
         }
-        input:focus { border-color: var(--stock); box-shadow: 0 0 0 2px rgba(255, 214, 10, 0.2); }
+        input:focus { border-color: var(--yellow); box-shadow: 0 0 0 2px rgba(255, 214, 10, 0.2); }
+        
         .btn-main {
-            width: 100%; padding: 15px; background: var(--stock); color: black;
-            border: none; border-radius: 10px; font-weight: 800; cursor: pointer;
+            width: 100%; padding: 15px; background: var(--yellow); color: #000;
+            border: none; border-radius: 12px; font-weight: 800; font-size: 1rem;
+            cursor: pointer; transition: 0.2s;
         }
+        .btn-main:active { transform: scale(0.95); }
 
-        /* --- CEREBRO IA --- */
+        /* CEREBRO IA */
         .ai-card {
-            background: linear-gradient(135deg, #150020 0%, #0a0a0a 100%);
-            border: 1px solid var(--ai); border-radius: var(--radius);
+            background: linear-gradient(135deg, #1a0524, #050505);
+            border: 1px solid var(--purple); border-radius: var(--radius);
             padding: 20px; margin-bottom: 25px; position: relative;
-            box-shadow: 0 0 25px var(--ai-glow); display: none;
+            box-shadow: 0 0 25px rgba(212, 55, 255, 0.2); display: none;
             animation: pulse 4s infinite alternate;
         }
-        .ai-label { color: var(--ai); font-size: 0.8rem; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
-        .ai-content { font-size: 0.95rem; line-height: 1.5; color: #f0f0f0; }
-        .ai-footer { font-size: 0.7rem; color: #666; text-align: right; margin-top: 10px; }
+        .ai-title { color: var(--purple); font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        .ai-text { font-size: 0.9rem; line-height: 1.5; color: #eee; }
+        .ai-date { font-size: 0.7rem; color: #666; text-align: right; margin-top: 12px; }
 
-        /* --- TAREAS STOCK --- */
-        .section-label { color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 1px; }
+        /* TAREAS */
+        .label { color: #666; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         
         .task-card {
-            background: var(--card-bg); padding: 16px; border-radius: var(--radius);
-            margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
-            border: 1px solid #222; transition: 0.3s;
-            animation: slideIn 0.4s ease backwards; /* Animación Cascada */
+            background: var(--card); border-radius: var(--radius);
+            padding: 16px; margin-bottom: 12px; border: 1px solid #222;
+            display: flex; justify-content: space-between; align-items: center;
+            animation: slideIn 0.4s ease backwards;
         }
-        .task-info h3 { margin: 0; font-size: 1rem; color: #fff; }
-        .task-detail { font-size: 0.8rem; color: var(--text-dim); display: flex; align-items: center; gap: 5px; margin-top: 4px; }
+        
+        .task-info h3 { margin: 0; font-size: 1.05rem; color: #fff; }
+        .task-meta { font-size: 0.8rem; color: #888; margin-top: 4px; display: flex; align-items: center; gap: 5px; }
         
         .btn-check {
-            width: 44px; height: 44px; border-radius: 50%; border: none;
-            background: #1a1a1a; color: #666; cursor: pointer; transition: 0.2s;
-            display: flex; align-items: center; justify-content: center;
+            width: 46px; height: 46px; border-radius: 50%; border: none;
+            background: #1a1a1a; color: #555; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: 0.3s;
         }
         .btn-check:active { transform: scale(0.9); }
-        .btn-check.checked { background: var(--success); color: #000; }
+        .btn-check.checked { background: var(--green); color: #000; transform: rotate(360deg); }
 
-        /* --- MODAL PERSONALIZADO (Reemplaza Alert/Confirm) --- */
+        /* --- MODAL PERSONALIZADO (Adiós Alerts) --- */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(4px);
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
             z-index: 1000; display: none; justify-content: center; align-items: center;
             padding: 20px; opacity: 0; transition: opacity 0.3s;
         }
         .modal-box {
-            background: #161616; border: 1px solid #333; padding: 25px;
-            border-radius: 20px; max-width: 350px; width: 100%; text-align: center;
-            transform: scale(0.9); transition: transform 0.3s;
+            background: #141414; border: 1px solid #333; padding: 25px;
+            border-radius: 22px; width: 100%; max-width: 340px;
+            text-align: center; transform: scale(0.9); transition: transform 0.3s;
         }
-        .modal-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: center; gap: 10px; }
-        .modal-text { color: #aaa; font-size: 0.9rem; margin-bottom: 25px; line-height: 1.5; }
+        .modal-icon { font-size: 40px; margin-bottom: 15px; }
+        .modal-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 10px; }
+        .modal-desc { color: #aaa; font-size: 0.9rem; line-height: 1.5; margin-bottom: 25px; }
+        
         .modal-actions { display: flex; gap: 10px; }
-        .btn-modal { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-modal {
+            flex: 1; padding: 14px; border-radius: 12px; border: none;
+            font-weight: 800; cursor: pointer; font-size: 0.95rem;
+        }
         .btn-cancel { background: #222; color: #fff; }
-        .btn-confirm { background: var(--stock); color: #000; }
-
+        .btn-confirm { background: var(--yellow); color: #000; }
+        
         /* --- TOAST --- */
         #toast {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(50px);
-            background: #222; border: 1px solid #333; padding: 12px 24px;
-            border-radius: 50px; display: flex; align-items: center; gap: 10px;
+            background: #222; border: 1px solid #333; color: white;
+            padding: 12px 24px; border-radius: 50px; font-weight: 600;
+            display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             opacity: 0; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 1100; white-space: nowrap; font-weight: 600; font-size: 0.9rem;
+            z-index: 1100; white-space: nowrap;
         }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        /* --- UTILS --- */
+        /* CLASES UTILES */
         .hidden { display: none !important; }
-        .show-flex { display: flex !important; opacity: 1 !important; }
-        .show-flex .modal-box { transform: scale(1) !important; }
+        .show-modal { display: flex !important; opacity: 1 !important; }
+        .show-modal .modal-box { transform: scale(1) !important; }
         .spin { animation: rot 1s infinite linear; }
+        
         @keyframes rot { 100% { transform: rotate(360deg); } }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideIn { from { opacity: 0; transform: translateX(-15px); } to { opacity: 1; transform: translateX(0); } }
@@ -149,58 +158,50 @@
 <body>
 
     <header>
-        <div class="brand">
-            <i class="material-icons" style="color: var(--stock);">inventory_2</i> STOCK AI
+        <div class="logo">
+            <i class="material-icons" style="color:var(--yellow)">inventory_2</i> STOCK AI
         </div>
         <div class="controls">
-            <button onclick="pedirConfirmacionIA()">
-                <i class="material-icons" style="color: var(--ai);">psychology</i>
-            </button>
-            <button onclick="mostrarAyuda()">
-                <i class="material-icons">help_outline</i>
-            </button>
-            <div id="user-badge" class="hidden" style="font-size: 0.75rem; background: #222; padding: 4px 10px; border-radius: 20px; color: var(--stock); border: 1px solid #333;"></div>
+            <button onclick="forzarIA()"><i class="material-icons" style="color:var(--purple)">psychology</i></button>
+            <button onclick="mostrarAyuda()"><i class="material-icons">help_outline</i></button>
+            <div id="user-badge" class="hidden" style="font-size:0.8rem; background:#222; padding:4px 10px; border-radius:10px; color:var(--yellow); margin-left:5px;"></div>
         </div>
     </header>
 
     <div class="container">
-        
         <div id="view-login" class="login-card">
-            <i class="material-icons" style="font-size: 48px; color: var(--stock); margin-bottom: 15px;">fingerprint</i>
-            <h2 style="margin: 0; color: #fff;">Identifícate</h2>
-            <p style="color: #666; margin-bottom: 25px;">Ingresa tu nombre para comenzar</p>
-            <input type="text" id="input-name" placeholder="Ej: Pablo">
-            <button class="btn-main" onclick="login()">INGRESAR SISTEMA</button>
+            <i class="material-icons" style="font-size:50px; color:var(--yellow); margin-bottom:15px;">fingerprint</i>
+            <h2 style="margin:0; color:#fff">Bienvenido</h2>
+            <p style="color:#666; margin-bottom:25px">Sistema de control inteligente</p>
+            <input type="text" id="input-name" placeholder="Ingresa tu nombre">
+            <button class="btn-main" onclick="login()">INICIAR TURNO</button>
         </div>
 
         <div id="view-app" class="hidden">
-            
             <div id="ai-section" class="ai-card">
-                <div class="ai-label"><i class="material-icons">auto_awesome</i> IA REPORT</div>
-                <div id="ai-text" class="ai-content">Cargando análisis neural...</div>
-                <div id="ai-date" class="ai-footer"></div>
+                <div class="ai-title"><i class="material-icons">auto_awesome</i> ANÁLISIS IA</div>
+                <div id="ai-text" class="ai-text">...</div>
+                <div id="ai-date" class="ai-date"></div>
             </div>
 
-            <div class="section-label">Prioridades de Stock</div>
+            <div class="label">Pendientes</div>
             <div class="task-list"></div>
         </div>
     </div>
 
     <div id="modal-overlay" class="modal-overlay">
         <div class="modal-box">
-            <div id="modal-title" class="modal-title">Título</div>
-            <div id="modal-text" class="modal-text">Mensaje</div>
-            <div id="modal-actions" class="modal-actions">
+            <div id="modal-icon" class="modal-icon"></div>
+            <div id="modal-title" class="modal-title"></div>
+            <div id="modal-desc" class="modal-desc"></div>
+            <div class="modal-actions">
                 <button class="btn-modal btn-cancel" onclick="cerrarModal()">Cancelar</button>
-                <button id="btn-confirm-action" class="btn-modal btn-confirm">Confirmar</button>
+                <button id="btn-confirm" class="btn-modal btn-confirm">Confirmar</button>
             </div>
         </div>
     </div>
 
-    <div id="toast">
-        <i class="material-icons">check_circle</i>
-        <span id="toast-msg">Acción correcta</span>
-    </div>
+    <div id="toast"><i class="material-icons">check</i><span id="toast-msg"></span></div>
 
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script src="app.js"></script>
