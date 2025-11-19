@@ -127,3 +127,86 @@ function initOneSignal() {
         });
     });
 }
+
+// PEGAR ESTO EN APP.JS
+
+// URL DE TU WORKER
+const WORKER_URL = "https://jolly-dust-2d7a.santamariapablodaniel.workers.dev/";
+
+// Cargar al iniciar
+window.addEventListener('DOMContentLoaded', () => {
+    initOneSignal();
+    cargarStockInteligente(); // Nueva función de carga
+});
+
+async function cargarStockInteligente() {
+    const container = document.querySelector('.task-list'); // Tu contenedor de tarjetas
+    if(!container) return;
+
+    container.innerHTML = '<div style="text-align:center; padding:20px;"><i class="material-icons spin">sync</i><p>Analizando stocks...</p></div>';
+
+    try {
+        const res = await fetch(WORKER_URL); // GET request
+        const data = await res.json();
+        
+        if(data.status === "success") {
+            renderizarTareas(data.tasks);
+        }
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<p style="text-align:center; color:red">Error de conexión</p>';
+    }
+}
+
+function renderizarTareas(lista) {
+    const container = document.querySelector('.task-list');
+    container.innerHTML = "";
+
+    if (lista.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center; margin-top:30px; opacity:0.7;">
+                <i class="material-icons" style="font-size:48px; color:#00C851;">verified</i>
+                <p>¡Todo al día! Descansa.</p>
+            </div>
+        `;
+        return;
+    }
+
+    lista.forEach(item => {
+        // Estilos según urgencia
+        let borde = "#FFD600"; // Amarillo (Toca hoy)
+        let icono = "schedule";
+        let textoColor = "#FFF";
+        
+        if (item.urgencia >= 1.5) {
+            borde = "#FF4444"; // Rojo (Muy atrasado)
+            icono = "warning";
+            textoColor = "#FF8888";
+        } else if (item.mensaje.includes("Adelantar")) {
+            borde = "#00C851"; // Verde (Adelantar)
+            icono = "event_available";
+        }
+
+        const card = document.createElement('div');
+        card.className = 'task-card'; // Asegúrate de tener esta clase en CSS
+        card.style.borderLeft = `5px solid ${borde}`;
+        card.style.marginBottom = "15px";
+        card.id = `card-${cleanId(item.proveedor)}`;
+
+        card.innerHTML = `
+            <div class="task-info">
+                <h3 style="margin:0; font-size:1.1rem;">${item.proveedor}</h3>
+                <p style="margin:5px 0; font-size:0.85rem; color:${textoColor}; display:flex; align-items:center; gap:5px;">
+                    <i class="material-icons" style="font-size:14px">${icono}</i> 
+                    ${item.mensaje} 
+                    <span style="opacity:0.6; margin-left:5px;">(hace ${item.diasAtraso} días)</span>
+                </p>
+            </div>
+            <button class="btn-icon" onclick="enviarReporte('${item.proveedor}', this)">
+                <i class="material-icons">check</i>
+            </button>
+        `;
+        
+        container.appendChild(card);
+    });
+}
