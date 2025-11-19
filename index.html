@@ -2,42 +2,57 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Stock Supervisor</title>
 
     <!-- PWA -->
-    <meta name="theme-color" content="#0faa4b">
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <meta name="theme-color" content="#000000" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
 
-    <!-- ESTILOS MODERNOS -->
+    <!-- ESTILOS NEGRO + AMARILLO -->
     <style>
         :root {
-            --primary: #0faa4b;
-            --primary-dark: #078a3b;
-            --accent: #c3ff9c;
-            --bg: #eef6ef;
-            --white: #fff;
-            --shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+            --bg-dark: #0a0a0a;
+            --bg-card: #1a1a1a;
+            --bg-soft: #2a2a2a;
+            --text-light: #e6e6e6;
+            --text-gray: #bbbbbb;
+            --yellow: #ffcc00;
+            --yellow-dark: #d4a900;
+            --shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
             --radius: 18px;
         }
 
         body {
             margin: 0;
-            background: var(--bg);
+            background: var(--bg-dark);
             font-family: "Segoe UI", Roboto, Arial, sans-serif;
-            color: #333;
+            color: var(--text-light);
         }
 
         /* HEADER */
         .header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            background: linear-gradient(135deg, #000000, #2a2a2a);
             padding: 25px 15px;
             text-align: center;
-            color: var(--white);
+            color: var(--yellow);
             box-shadow: var(--shadow);
-            border-radius: 0 0 25px 25px;
+            border-bottom: 3px solid var(--yellow-dark);
+            animation: fadeDown 0.6s ease;
+        }
+
+        @keyframes fadeDown {
+            0% {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .header h1 {
@@ -45,27 +60,19 @@
             font-size: 1.7em;
             font-weight: bold;
             letter-spacing: 0.5px;
-            animation: bounceIn 0.8s ease;
         }
 
-        @keyframes bounceIn {
-            0% { transform: scale(0.75); opacity: 0; }
-            60% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); }
-        }
-
-        /* CONTENEDOR */
         .container {
             padding: 20px;
             max-width: 520px;
             margin: auto;
         }
 
-        /* INPUT Y BOTONES */
         label {
             font-weight: 600;
             margin-bottom: 8px;
             display: block;
+            color: var(--yellow);
         }
 
         input {
@@ -73,16 +80,23 @@
             padding: 14px;
             font-size: 1em;
             border-radius: var(--radius);
-            border: 2px solid #ccc;
+            border: 2px solid #555;
+            background: #111;
+            color: var(--text-light);
             transition: 0.25s;
         }
 
+        input::placeholder {
+            color: var(--text-gray);
+        }
+
         input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(15, 170, 75, 0.25);
+            border-color: var(--yellow);
+            box-shadow: 0 0 0 4px rgba(255, 204, 0, 0.25);
             outline: none;
         }
 
+        /* BOTONES */
         .btn {
             padding: 14px;
             border-radius: var(--radius);
@@ -90,15 +104,15 @@
             border: none;
             cursor: pointer;
             width: 100%;
-            background: var(--primary);
-            color: var(--white);
+            background: var(--yellow);
+            color: #000;
             font-weight: bold;
             box-shadow: var(--shadow);
             transition: 0.15s ease;
         }
 
         .btn:hover {
-            background: var(--primary-dark);
+            background: var(--yellow-dark);
         }
 
         .btn:active {
@@ -107,24 +121,43 @@
 
         /* TARJETAS */
         .stock-item {
-            background: var(--white);
+            background: var(--bg-card);
             padding: 18px;
             margin-bottom: 18px;
             border-radius: var(--radius);
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 12px;
             box-shadow: var(--shadow);
-            transition: 0.15s ease;
+            animation: fadeIn 0.6s ease;
         }
 
-        .stock-item:hover {
-            transform: translateY(-5px);
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stock-item-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .stock-item h3 {
             margin: 0;
-            max-width: 50%;
+            color: var(--yellow);
+        }
+
+        .stock-help {
+            font-size: 0.85em;
+            color: var(--text-gray);
         }
 
         /* BADGE */
@@ -133,13 +166,14 @@
             border-radius: 40px;
             font-weight: bold;
             background: #ff9800;
-            color: var(--white);
+            color: #000;
             display: inline-block;
             box-shadow: var(--shadow);
         }
 
         .status-success {
-            background: #22c55e !important;
+            background: var(--yellow) !important;
+            color: #000 !important;
         }
 
         /* TOAST */
@@ -148,8 +182,8 @@
             bottom: 25px;
             left: 50%;
             transform: translateX(-50%) scale(0.8);
-            background: var(--primary-dark);
-            color: white;
+            background: var(--yellow-dark);
+            color: #000;
             padding: 14px 22px;
             border-radius: var(--radius);
             opacity: 0;
@@ -164,7 +198,9 @@
             transform: translateX(-50%) scale(1);
         }
 
-        .hidden { display: none !important; }
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -172,45 +208,56 @@
 
     <!-- HEADER -->
     <div class="header">
-        <h1><i class="material-icons" style="vertical-align: middle;">inventory</i> Stock Supervisor</h1>
+        <h1>
+            <i class="material-icons" style="vertical-align: middle;">inventory</i>
+            Stock Supervisor
+        </h1>
     </div>
 
-    <!-- CONTENEDOR -->
     <div class="container">
 
-        <!-- FORM INICIAL -->
+        <!-- CONFIGURACIÓN INICIAL -->
         <div id="encargado-setup">
-            <label>Ingresa tu Nombre (Encargado):</label>
-            <input type="text" id="encargado-name" placeholder="Tu nombre completo">
-            <button class="btn" onclick="saveEncargado()">Guardar y Activar Notificaciones</button>
+            <label>Ingresa tu nombre para identificar quién realiza el stock:</label>
+            <input type="text" id="encargado-name" placeholder="Ej: Pablo Santamaría">
+            <button class="btn" onclick="saveEncargado()">Guardar y activar notificaciones</button>
         </div>
 
-        <!-- MAIN APP -->
+        <!-- APP -->
         <div id="main-app" class="hidden">
             <p style="font-size: 1.1em;">
-                Hola <strong id="current-encargado"></strong>, estas son tus tareas:
+                Hola <strong id="current-encargado"></strong>, estas son tus tareas asignadas:
             </p>
 
             <div id="pending-stocks">
 
                 <div id="item-romyl" class="stock-item">
-                    <h3>Stock de ROMYL</h3>
-                    <button class="btn" onclick="markStockDone('ROMYL')">Marcar Realizado</button>
+                    <div class="stock-item-title">
+                        <h3>Stock de ROMYL</h3>
+                        <button class="btn" onclick="markStockDone('ROMYL')">Marcar Realizado</button>
+                    </div>
+                    <p class="stock-help">📦 Registrar que verificaste el inventario del proveedor ROMYL.</p>
                 </div>
 
                 <div id="item-stock-make" class="stock-item">
-                    <h3>Stock de STOCK MAKE</h3>
-                    <button class="btn" onclick="markStockDone('STOCK MAKE')">Marcar Realizado</button>
+                    <div class="stock-item-title">
+                        <h3>Stock de STOCK MAKE</h3>
+                        <button class="btn" onclick="markStockDone('STOCK MAKE')">Marcar Realizado</button>
+                    </div>
+                    <p class="stock-help">📦 Confirmá que revisaste la mercadería de STOCK MAKE.</p>
                 </div>
 
                 <div id="item-biobag" class="stock-item">
-                    <h3>Stock de BIO BAG</h3>
-                    <button class="btn" onclick="markStockDone('BIO BAG')">Marcar Realizado</button>
+                    <div class="stock-item-title">
+                        <h3>Stock de BIO BAG</h3>
+                        <button class="btn" onclick="markStockDone('BIO BAG')">Marcar Realizado</button>
+                    </div>
+                    <p class="stock-help">📦 Marca esta tarea cuando verifiques BIO BAG.</p>
                 </div>
 
             </div>
 
-            <div style="text-align:center; margin-top:25px">
+            <div style="text-align:center; margin-top:25px;">
                 <span id="notification-status">Notificaciones: PENDIENTE</span>
             </div>
         </div>
@@ -220,12 +267,11 @@
     <!-- TOAST -->
     <div id="toast"></div>
 
-    <!-- APP.JS -->
+    <!-- SCRIPT PRINCIPAL -->
     <script src="app.js"></script>
 
-    <!-- 🔔 OneSignal -->
+    <!-- OneSignal -->
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-
     <script>
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         OneSignalDeferred.push(async function (OneSignal) {
