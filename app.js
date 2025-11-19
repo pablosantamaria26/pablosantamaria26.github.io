@@ -1,73 +1,84 @@
 /****************************************************
- * APP.JS — STOCK SUPERVISOR (FINAL)
+ * APP.JS — STOCK SUPERVISOR (VERSIÓN LIMPIA)
  ****************************************************/
 
-// ⚠️ ESTA DEBE SER LA ÚNICA VEZ QUE SE DECLARA ESTA VARIABLE
+// ⚠️ ESTA VARIABLE DEBE APARECER SOLO UNA VEZ EN TODO EL ARCHIVO
 const WORKER_URL = "https://jolly-dust-2d7a.santamariapablodaniel.workers.dev/"; 
 
 let usuarioActual = localStorage.getItem("usuarioStock");
 
 // INICIO
 window.addEventListener('DOMContentLoaded', () => {
+    console.log("🚀 Iniciando Stock App...");
     verificarSesion();
     initOneSignal();
-    // Si ya está logueado, cargamos las tareas. Si no, esperamos al login.
-    if (usuarioActual) cargarStockInteligente();
+    // Si hay usuario guardado, intentamos cargar la lista
+    if (usuarioActual) {
+        console.log("Usuario detectado:", usuarioActual);
+        cargarStockInteligente();
+    }
 });
 
 // 1. GESTIÓN DE SESIÓN
 function verificarSesion() {
     if (usuarioActual) {
-        const viewLogin = document.getElementById("view-login");
-        const viewApp = document.getElementById("view-app");
-        const badge = document.getElementById("user-badge");
-
-        if(viewLogin) viewLogin.classList.add("hidden");
-        if(viewApp) viewApp.classList.remove("hidden");
+        // Ocultamos login, mostramos app
+        const loginView = document.getElementById("view-login");
+        const appView = document.getElementById("view-app"); // Ajustado al HTML nuevo
         
-        if(badge) {
+        // Soporte para ambas versiones de HTML (por si acaso)
+        if (loginView) loginView.classList.add("hidden");
+        if (appView) appView.classList.remove("hidden");
+        
+        // Mostramos badge
+        const badge = document.getElementById("user-badge");
+        if (badge) {
             badge.textContent = usuarioActual;
             badge.classList.remove("hidden");
         }
     }
 }
 
-// ESTA ES LA FUNCIÓN QUE NO ENCONTRABA ANTES
+// FUNCIÓN LOGIN (La que daba error "not defined")
 function login() {
     const input = document.getElementById("input-name");
+    if (!input) return console.error("No encuentro el input-name");
+    
     const nombre = input.value.trim();
 
     if (nombre.length < 2) {
-        mostrarToast("Por favor ingresa un nombre válido", "error");
+        mostrarToast("Ingresa un nombre válido", "error");
         return;
     }
 
     usuarioActual = nombre;
     localStorage.setItem("usuarioStock", nombre);
+    
+    mostrarToast(`¡Hola, ${nombre}!`, "success");
     verificarSesion();
-    cargarStockInteligente(); // Cargamos la lista al entrar
-    mostrarToast(`Hola, ${nombre} 👋`, "success");
+    cargarStockInteligente();
 }
 
-// 2. CARGAR LISTA INTELIGENTE (DESDE WORKER -> GAS -> DRIVE)
+// 2. CARGAR LISTA INTELIGENTE
 async function cargarStockInteligente() {
     const container = document.querySelector('.task-list');
     if(!container) return;
 
-    container.innerHTML = '<div style="text-align:center; padding:20px; color:#888"><i class="material-icons spin">sync</i><p>Analizando prioridades...</p></div>';
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:#888"><i class="material-icons spin">sync</i><p>Consultando al Supervisor...</p></div>';
 
     try {
+        // Petición GET al Worker
         const res = await fetch(WORKER_URL); 
         const data = await res.json();
         
         if(data.status === "success" && data.tasks) {
             renderizarTareas(data.tasks);
         } else {
-            throw new Error("Formato incorrecto");
+            container.innerHTML = '<p style="text-align:center">No se pudo leer la lista.</p>';
         }
     } catch (e) {
-        console.error(e);
-        container.innerHTML = '<div style="text-align:center; padding:20px; color:#ff4444"><i class="material-icons">wifi_off</i><p>Error de conexión</p><button class="btn" onclick="cargarStockInteligente()" style="margin-top:10px; width:auto">REINTENTAR</button></div>';
+        console.error("Error carga:", e);
+        container.innerHTML = '<div style="text-align:center; padding:20px; color:#ff4444"><p>Error de conexión</p></div>';
     }
 }
 
@@ -78,43 +89,42 @@ function renderizarTareas(lista) {
     if (lista.length === 0) {
         container.innerHTML = `
             <div style="text-align:center; margin-top:30px; opacity:0.7;">
-                <i class="material-icons" style="font-size:48px; color:#00C851;">verified</i>
-                <p>¡Todo al día! Descansa.</p>
+                <i class="material-icons" style="font-size:48px; color:#00C851;">check_circle</i>
+                <p>¡Todo el stock está al día!</p>
             </div>
         `;
         return;
     }
 
     lista.forEach(item => {
-        // Estilos según urgencia
-        let borde = "#FFD600"; // Amarillo (Pendiente normal)
+        // Estilos dinámicos
+        let borde = "#FFD600"; // Amarillo
         let icono = "schedule";
-        let textoColor = "#CCC"; // Gris claro
+        let colorTexto = "#ccc";
         
-        // Lógica visual
-        if (item.urgencia >= 1.5) { // CRÍTICO
+        if (item.urgencia >= 1.5) { // Crítico
             borde = "#FF4444"; 
-            icono = "warning";
-            textoColor = "#FF8888";
-        } else if (item.mensaje.includes("Adelantar")) { // ADELANTAR
+            icono = "priority_high";
+            colorTexto = "#ff8888";
+        } else if (item.mensaje && item.mensaje.includes("Adelantar")) { // Adelantar
             borde = "#00C851"; 
-            icono = "event_available";
-            textoColor = "#88FF88";
+            icono = "speed";
+            colorTexto = "#88ff88";
         }
 
-        const card = document.createElement('div');
-        card.className = 'task-card'; 
-        card.style.borderLeft = `5px solid ${borde}`;
-        card.style.marginBottom = "15px";
-        card.id = `card-${cleanId(item.proveedor)}`;
+        const div = document.createElement('div');
+        div.className = 'task-card';
+        div.style.borderLeft = `5px solid ${borde}`;
+        div.style.marginBottom = "15px";
+        div.id = `card-${cleanId(item.proveedor)}`;
 
-        card.innerHTML = `
+        div.innerHTML = `
             <div class="task-info">
-                <h3 style="margin:0; font-size:1.1rem; color:#FFF">${item.proveedor}</h3>
-                <p style="margin:5px 0; font-size:0.85rem; color:${textoColor}; display:flex; align-items:center; gap:5px;">
+                <h3 style="margin:0; font-size:1.1rem; color:white;">${item.proveedor}</h3>
+                <p style="margin:5px 0; font-size:0.85rem; color:${colorTexto}; display:flex; align-items:center; gap:5px;">
                     <i class="material-icons" style="font-size:14px">${icono}</i> 
-                    ${item.mensaje} 
-                    <span style="opacity:0.6; margin-left:5px;">(hace ${item.diasAtraso} días)</span>
+                    ${item.mensaje || "Pendiente"} 
+                    <span style="opacity:0.5; font-size:0.75em">(${item.diasAtraso}d)</span>
                 </p>
             </div>
             <button class="btn-icon" onclick="enviarReporte('${item.proveedor}', this)">
@@ -122,19 +132,20 @@ function renderizarTareas(lista) {
             </button>
         `;
         
-        container.appendChild(card);
+        container.appendChild(div);
     });
 }
 
-// 3. ENVÍO DE REPORTE AL WORKER
-async function enviarReporte(proveedor, btnElement) {
+// 3. ENVIAR REPORTE (POST)
+async function enviarReporte(proveedor, btn) {
     if (!usuarioActual) return location.reload();
 
-    const originalIcon = btnElement.innerHTML;
-    btnElement.innerHTML = '<i class="material-icons spin">sync</i>';
-    btnElement.disabled = true;
+    // UI Loading
+    const originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="material-icons spin">sync</i>';
+    btn.disabled = true;
 
-    const datos = {
+    const payload = {
         action: "stockDone",
         proveedor: proveedor,
         encargado: usuarioActual,
@@ -142,53 +153,48 @@ async function enviarReporte(proveedor, btnElement) {
     };
 
     try {
-        const respuesta = await fetch(WORKER_URL, {
+        const res = await fetch(WORKER_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(datos)
+            body: JSON.stringify(payload)
         });
+        
+        const data = await res.json();
 
-        const resultado = await respuesta.json();
-
-        if (resultado.status === "success") {
-            btnElement.innerHTML = '<i class="material-icons">done_all</i>';
-            btnElement.classList.add("checked");
-            
-            const card = document.getElementById(`card-${cleanId(proveedor)}`);
-            if(card) card.style.opacity = "0.4";
-            
-            mostrarToast(`${proveedor} registrado correctamente`, "success");
+        if (data.status === "success") {
+            btn.innerHTML = '<i class="material-icons">done</i>';
+            btn.classList.add("checked");
+            document.getElementById(`card-${cleanId(proveedor)}`).style.opacity = "0.3";
+            mostrarToast("Registrado correctamente", "success");
         } else {
-            throw new Error(resultado.message || "Error desconocido");
+            throw new Error(data.message);
         }
-
-    } catch (error) {
-        console.error(error);
-        mostrarToast("Error de conexión", "error");
-        btnElement.innerHTML = originalIcon;
-        btnElement.disabled = false;
+    } catch (e) {
+        console.error(e);
+        mostrarToast("Error al enviar", "error");
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
     }
 }
 
 // 4. UTILIDADES
 function cleanId(str) {
-    return str.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    return str.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-function mostrarToast(mensaje, tipo) {
-    const toast = document.getElementById("toast");
-    const texto = document.getElementById("toast-msg");
-    const icono = toast.querySelector("i");
+function mostrarToast(msg, tipo) {
+    const t = document.getElementById("toast");
+    const tm = document.getElementById("toast-msg");
+    const icon = t.querySelector("i");
 
-    if(texto) texto.textContent = mensaje;
-    if(icono) icono.textContent = tipo === "success" ? "check_circle" : "error_outline";
+    if(tm) tm.textContent = msg;
+    if(icon) icon.textContent = tipo==="success" ? "check" : "warning";
     
-    if(toast) {
-        toast.className = ""; 
-        toast.classList.add(tipo);
-        toast.classList.add("show");
-        setTimeout(() => toast.classList.remove("show"), 3500);
-    }
+    t.className = ""; 
+    t.classList.add(tipo);
+    t.classList.add("show");
+    
+    setTimeout(() => t.classList.remove("show"), 3000);
 }
 
 // 5. ONESIGNAL
