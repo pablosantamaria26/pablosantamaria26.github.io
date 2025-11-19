@@ -58,7 +58,7 @@ function saveEncargado() {
 
 
 /****************************************************
- *      MARCAR STOCK REALIZADO
+ *      MARCAR STOCK REALIZADO — VERSIÓN FINAL
  ****************************************************/
 function markStockDone(proveedor) {
     if (!ENCARGADO_NAME) return showToast("Primero ingresá tu nombre", true);
@@ -67,34 +67,39 @@ function markStockDone(proveedor) {
 
     showToast(`Marcando ${proveedor}…`);
 
-    // Envío de datos al Apps Script
     fetch(APPS_SCRIPT_URL, {
         method: "POST",
-        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
             action: "stockDone",
-            proveedor,
+            proveedor: proveedor,
             encargado: ENCARGADO_NAME,
             fechaRealizacion: new Date().toISOString()
         })
     })
-        .then(() => {
-            // SUCCESS VISUAL
-            const card = document.querySelector(`#item-${cleanId(proveedor)}`);
-            if (card) {
-                card.style.opacity = "0.3";
-                card.style.transform = "scale(0.97)";
-            }
+    .then(r => r.json())
+    .then(res => {
+        console.log("Respuesta GAS:", res);
 
-            showToast(`✔ ${proveedor} realizado`);
+        if (res.status !== "success") {
+            return showToast("Error desde servidor: " + res.message, true);
+        }
 
-            setTimeout(() => {
-                card?.classList.add("hidden");
-            }, 1000);
-        })
-        .catch(() => {
-            showToast("Error enviando datos 🚨", true);
-        });
+        // ÉXITO TOTAL
+        const card = document.querySelector(`#item-${cleanId(proveedor)}`);
+        if (card) {
+            card.style.opacity = "0.3";
+            card.style.transform = "scale(0.97)";
+        }
+
+        showToast(`✔ ${proveedor} realizado`);
+
+        setTimeout(() => card?.classList.add("hidden"), 900);
+    })
+    .catch(err => {
+        console.error("Error fetch:", err);
+        showToast("Error enviando datos 🚨", true);
+    });
 }
 
 
